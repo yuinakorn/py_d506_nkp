@@ -163,6 +163,3 @@ def toggle_process(option) -> str | dict[str, str]:
 if __name__ == "__main__":
     asyncio.run(toggle_process())
     print("Main program continues executing...")
-
-
-
