@@ -116,7 +116,6 @@ def transfer_table(source_tables, destination_tables):
     finally:
         destination_conn.commit()
         print("\nData transfer complete!")
-        create_uuid_to_epi_guid()
         source_conn.close()
         destination_conn.close()
 
