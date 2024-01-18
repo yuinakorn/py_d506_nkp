@@ -12,4 +12,3 @@ async def root():
 @app.post("/sent_to_cmpho/{option}")
 async def sent_to_cmpho(option: str):
     return toggle_process(option)
-
