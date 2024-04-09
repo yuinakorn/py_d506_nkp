@@ -76,18 +76,25 @@ def transfer_table(source_tables, destination_tables):
         source_cursor.execute(f"SELECT * FROM {source_tables}")
         rows = source_cursor.fetchall()
 
+        print(rows)
+
         # Start a transaction on the destination connection
         destination_conn.begin()
 
         # Calculate total rows for progress bar
         total_rows = len(rows)
+        print(f"Total rows to transfer: {total_rows}")
 
         # Insert data into the destination table using a loop and batch inserts
         chunk_size = 1500  # Adjust the chunk size based on your preference
 
+        # เป็นการใช้ tqdm library เพื่อสร้าง progress bar
         with tqdm(total=total_rows, desc="Inserting Rows", unit="row") as pbar:
             for i in range(0, len(rows), chunk_size):
+                # เป็นการสร้าง chunk ของข้อมูลที่จะนำมาแทรก โดยใช้ slicing บน rows
                 chunk = rows[i:i + chunk_size]
+
+                # เป็นการสร้าง string ที่เก็บ placeholder %s ซ้ำจำนวนเท่ากับจำนวนคอลัมน์ของแต่ละ row ใน chunk โดยใช้ join() และ list comprehension
                 value_placeholders = ', '.join(['%s'] * len(chunk[0]))
 
                 # Construct the VALUES clause for the chunk dynamically
@@ -97,17 +104,16 @@ def transfer_table(source_tables, destination_tables):
                 columns = ', '.join([f"`{column[0]}`" for column in source_cursor.description])
 
                 query = f"REPLACE INTO `{destination_tables}` ({columns}) VALUES {values_clause}"
-                # print(query)
 
                 try:
                     # Flatten the chunk list to pass as a single parameter to executemany
-                    flat_chunk = [value for row in chunk for value in row]
-                    destination_cursor.executemany(query, [flat_chunk])
+                    # flat_chunk = [value for row in chunk for value in row]
+                    # destination_cursor.executemany(query, [flat_chunk])
+                    # คำสั่งนี้สั้นกว่า
+                    destination_cursor.execute(query, tuple([value for row in chunk for value in row]))
 
                 except Exception as e:
                     print(f"Error: {e}")
-
-                finally:
                     destination_conn.rollback()
 
                 pbar.update(len(chunk))
@@ -133,11 +139,18 @@ async def run_transfer_table(source_tables: list, destination_tables: list):
 def toggle_process(option) -> str | dict[str, str]:
     # async process
     if option == '1':
+        # source_tables = [
+        #     "ddc_epidem_report_nkp"
+        # ]
         source_tables = [
             "ddc_person_nkp",
             "ddc_epidem_report_nkp",
             "ddc_lab_report_nkp"
         ]
+
+        # destination_tables = [
+        #     "ddc1_epidem_report_copy1"
+        # ]
 
         destination_tables = [
             "ddc1_person",
